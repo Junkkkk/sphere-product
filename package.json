@@ -1,0 +1,38 @@
+{
+  "name": "sphere",
+  "version": "0.3.0",
+  "description": "SPHERE — privacy-preserving synthetic data for AI agents. MCP server + sealed engine in one package.",
+  "type": "module",
+  "bin": {
+    "sphere": "engine/sphere.cjs",
+    "sphere-mcp": "src/server.js"
+  },
+  "scripts": {
+    "postinstall": "node engine/postinstall.cjs",
+    "test": "node test/boundary.test.mjs"
+  },
+  "files": [
+    "src",
+    "engine"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "cpu": [
+    "arm64",
+    "x64"
+  ],
+  "keywords": [
+    "synthetic-data",
+    "privacy",
+    "mcp",
+    "cli"
+  ],
+  "homepage": "https://github.com/statzihuai/sphere-cli",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": false
+}
