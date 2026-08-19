@@ -142,6 +142,21 @@ const ok = (text) => ({ content: [{ type: 'text', text }] });
 const fail = (text) => ({ content: [{ type: 'text', text }], isError: true });
 
 async function sphere_open({ path: p }) {
+  // A chat attachment is uploaded to the client's cloud sandbox and surfaces at a
+  // path that cannot exist on this machine. Reporting "no file" here is accurate
+  // but hides what actually happened, so say it plainly instead. This is
+  // NOTIFICATION, NOT PREVENTION: the upload completed before this tool was ever
+  // called, and MCP exposes no hook earlier than this point. See OBSERVED_FAILURES
+  // F01a (this message) and F01b (the structural gap it cannot close).
+  if (p && /^\/mnt\//.test(p)) {
+    return fail(
+      `This file appears to be a cloud-uploaded attachment, not a local file accessible to SPHERE.\n` +
+        `The upload happened before SPHERE was called, so SPHERE could not prevent the file from leaving your machine.\n\n` +
+        `To use SPHERE correctly, provide the file's local path instead, for example:\n` +
+        `/Users/you/data/patients.csv\n\n` +
+        `If this file contains sensitive data, remove the attachment from this conversation and start a new chat using the local path.`,
+    );
+  }
   if (!p || !fs.existsSync(p)) return fail(`No file at ${p}`);
   S.realPath = path.resolve(p);
   S.synthPath = null;
@@ -258,6 +273,13 @@ async function sphere_deploy({ code }) {
       `Completed on real data.\n` +
         `The user's results are in ${dir}: real-output.txt` +
         (r.figures.length ? ` and ${r.figures.map((f) => 'real-' + f).join(', ')}` : '') + `\n\n` +
+        // The model already knows this path; printing it leaks nothing. Without it
+        // the results sit unreachable in a hidden directory and the user ends up
+        // asking the model to print real values — the exact pressure the boundary
+        // exists to resist. See OBSERVED_FAILURES F07.
+        `SHOW THE USER THESE COMMANDS VERBATIM so they can open their own results:\n` +
+        `  open ${dir}\n` +
+        `  cat ${path.join(dir, 'real-output.txt')}\n\n` +
         `Results are deliberately not returned to you. Ask the user whether they look sensible. ` +
         `If not, use sphere_simulate rather than requesting real values.`,
     );
